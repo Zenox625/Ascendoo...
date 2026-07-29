@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, Suspense, Component, type ReactNode } from "react";
 import Link from "next/link";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
@@ -8,6 +8,25 @@ import * as THREE from "three";
 import StarField from "@/components/universe/StarField";
 import CloudField, { CATEGORIES, SPACING, TOTAL_WIDTH } from "@/components/universe/CloudField";
 import MainUniverse from "@/components/universe/MainUniverse";
+
+// If the Environment's HDRI asset fails to load entirely (network blocked,
+// unreachable CDN, etc.), useEnvironment's Suspense-based loader rejects and
+// would otherwise crash the whole Canvas with nothing rendering. This catches
+// that specific failure so the rest of the scene (including the glass object,
+// just without HDRI reflections) still shows up.
+class EnvironmentErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error: unknown) {
+    console.error("Environment failed to load, continuing without it:", error);
+  }
+  render() {
+    if (this.state.failed) return null;
+    return this.props.children;
+  }
+}
 
 function wrap(base: number, offset: number) {
   let x = base - offset;
@@ -24,6 +43,24 @@ function InertiaDriver({ offsetRef, velocityRef, active }: { offsetRef: React.Mu
     velocityRef.current *= 0.94;
     if (Math.abs(velocityRef.current) < 0.0005) velocityRef.current = 0;
   });
+  return null;
+}
+
+function SceneBackground({ fadeRef }: { fadeRef: React.MutableRefObject<number> }) {
+  const { scene } = useThree();
+  const dark = new THREE.Color("#05060a");
+  const light = new THREE.Color("#EDEAE2");
+  const current = new THREE.Color();
+
+  // Same justified exception as CameraRig: `scene` comes from useThree(), and
+  // mutating it every frame inside useFrame is the standard, correct R3F
+  // pattern for driving a Three.js scene property from React state.
+  /* eslint-disable react-hooks/immutability */
+  useFrame(() => {
+    current.copy(dark).lerp(light, fadeRef.current);
+    scene.background = current.clone();
+  });
+  /* eslint-enable react-hooks/immutability */
   return null;
 }
 
@@ -130,8 +167,15 @@ export default function UniverseApp() {
         <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
           <ambientLight intensity={0.6} />
           <pointLight position={[5, 5, 5]} intensity={0.8} />
-          {(phase === "zooming" || phase === "revealed") && <Environment preset="studio" environmentIntensity={1} />}
-          <StarField />
+          {(phase === "zooming" || phase === "revealed") && (
+            <EnvironmentErrorBoundary>
+              <Suspense fallback={null}>
+                <Environment preset="studio" environmentIntensity={1} />
+              </Suspense>
+            </EnvironmentErrorBoundary>
+          )}
+          <SceneBackground fadeRef={fadeRef} />
+          {phase !== "revealed" && <StarField />}
           <InertiaDriver offsetRef={offsetRef} velocityRef={velocityRef} active={phase === "field"} />
           <CameraRig phase={phase} targetXRef={targetXRef} fadeRef={fadeRef} />
           <CloudField offsetRef={offsetRef} selected={selected} fadeRef={fadeRef} onSelect={handleSelect} />
@@ -141,24 +185,31 @@ export default function UniverseApp() {
         </Canvas>
       </div>
 
-      {/* white reveal overlay */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: "radial-gradient(circle at center, #F4F1EA 0%, #E4E0D8 100%)",
-          opacity: overlayVisible ? 1 : 0,
-          transition: "opacity 1.1s ease",
-          pointerEvents: "none",
-        }}
-      />
+      {/* white reveal overlay — only for categories without real 3D content yet;
+          MAIN's background transition happens inside the Three.js scene itself
+          (SceneBackground), so an opaque HTML layer here would hide the glass object */}
+      {selected !== 0 && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "radial-gradient(circle at center, #F4F1EA 0%, #E4E0D8 100%)",
+            opacity: overlayVisible ? 1 : 0,
+            transition: "opacity 1.1s ease",
+            pointerEvents: "none",
+          }}
+        />
+      )}
 
       {/* top-left back link */}
       <Link
         href="/settings"
         style={{
-          position: "absolute", top: 20, left: 20, fontSize: 12, color: "#8D96A8",
-          textDecoration: "none", padding: "8px 14px", border: "1px solid rgba(255,255,255,.15)",
+          position: "absolute", top: 20, left: 20, fontSize: 12,
+          color: phase === "revealed" ? "#5B5D63" : "#8D96A8",
+          textDecoration: "none", padding: "8px 14px",
+          border: phase === "revealed" ? "1px solid rgba(0,0,0,.1)" : "1px solid rgba(255,255,255,.15)",
+          background: phase === "revealed" ? "rgba(255,255,255,.4)" : "transparent",
           borderRadius: 100, fontFamily: "ui-monospace, Menlo, monospace",
         }}
       >
