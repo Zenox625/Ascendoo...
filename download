@@ -1,0 +1,15 @@
+# Copy this file to .env.local and fill in your real values.
+# .env.local is already in .gitignore — never commit real secrets.
+
+# --- Supabase (new project, separate from the old Ascendo) ---
+SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=
+
+# --- Spotify (reused from the old project — same app, just update the
+# Redirect URI list on Spotify's dashboard once you know this project's URL) ---
+SPOTIFY_CLIENT_ID=
+SPOTIFY_CLIENT_SECRET=
+SPOTIFY_REDIRECT_URI=http://127.0.0.1:3000/api/spotify/callback
+
+# --- Google Calendar (reused — same secret ICS URL as before) ---
+GOOGLE_CALENDAR_ICS_URL=

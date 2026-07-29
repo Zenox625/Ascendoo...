@@ -1,16 +1,20 @@
 "use client";
 
-import dynamicImport from "next/dynamic";
+import GlassObject from "@/components/universe/GlassObject";
+import SubItem from "@/components/universe/SubItem";
 
-const UniverseApp = dynamicImport(() => import("@/components/universe/UniverseApp"), {
-  ssr: false,
-  loading: () => (
-    <div style={{ width: "100vw", height: "100vh", background: "#05060a", display: "flex", alignItems: "center", justifyContent: "center", color: "#8D96A8", fontSize: 13 }}>
-      Loading universe…
-    </div>
-  ),
-});
+const SUB_ITEMS = ["Routine", "Tasks", "Habits", "Journal"];
 
-export default function UniversePreviewClient() {
-  return <UniverseApp />;
+export default function MainUniverse({ position }: { position: [number, number, number] }) {
+  const radius = 2.6;
+  return (
+    <group>
+      <GlassObject position={position} />
+      {SUB_ITEMS.map((label, i) => {
+        const angle = (i / SUB_ITEMS.length) * Math.PI * 2 - Math.PI / 2;
+        const offset: [number, number, number] = [Math.cos(angle) * radius, Math.sin(angle) * radius * 0.6, Math.sin(angle) * 0.6];
+        return <SubItem key={label} label={label} center={position} offset={offset} />;
+      })}
+    </group>
+  );
 }
