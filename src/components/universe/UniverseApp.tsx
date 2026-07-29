@@ -3,9 +3,11 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Environment } from "@react-three/drei";
 import * as THREE from "three";
 import StarField from "@/components/universe/StarField";
 import CloudField, { CATEGORIES, SPACING, TOTAL_WIDTH } from "@/components/universe/CloudField";
+import MainUniverse from "@/components/universe/MainUniverse";
 
 function wrap(base: number, offset: number) {
   let x = base - offset;
@@ -64,10 +66,13 @@ export default function UniverseApp() {
   const [phase, setPhase] = useState<Phase>("field");
   const [selected, setSelected] = useState<number | null>(null);
   const [overlayVisible, setOverlayVisible] = useState(false);
+  const [targetX, setTargetX] = useState(0);
 
   const handleSelect = useCallback((index: number) => {
     setSelected(index);
-    targetXRef.current = wrap(index * SPACING, offsetRef.current);
+    const x = wrap(index * SPACING, offsetRef.current);
+    targetXRef.current = x;
+    setTargetX(x);
     setPhase("zooming");
     requestAnimationFrame(() => setOverlayVisible(true));
     window.setTimeout(() => setPhase("revealed"), 1350);
@@ -125,10 +130,14 @@ export default function UniverseApp() {
         <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
           <ambientLight intensity={0.6} />
           <pointLight position={[5, 5, 5]} intensity={0.8} />
+          {(phase === "zooming" || phase === "revealed") && <Environment preset="studio" environmentIntensity={1} />}
           <StarField />
           <InertiaDriver offsetRef={offsetRef} velocityRef={velocityRef} active={phase === "field"} />
           <CameraRig phase={phase} targetXRef={targetXRef} fadeRef={fadeRef} />
           <CloudField offsetRef={offsetRef} selected={selected} fadeRef={fadeRef} onSelect={handleSelect} />
+          {selected === 0 && (phase === "zooming" || phase === "revealed") && (
+            <MainUniverse position={[targetX, 0, 0]} />
+          )}
         </Canvas>
       </div>
 
@@ -162,19 +171,26 @@ export default function UniverseApp() {
         </div>
       )}
 
-      {phase === "revealed" && (
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18 }}>
+      {phase === "revealed" && selected !== 0 && (
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18, pointerEvents: "none" }}>
           <div style={{ fontFamily: "Georgia, serif", fontSize: 42, letterSpacing: 6, color: "#1A1B1E" }}>{categoryLabel}</div>
           <div style={{ fontSize: 13, color: "#5B5D63", maxWidth: 320, textAlign: "center", lineHeight: 1.6 }}>
-            This is where the {categoryLabel.toLowerCase()} object and its sub-categories will live — next step once the core feel is confirmed.
+            This is where the {categoryLabel.toLowerCase()} object and its sub-categories will live — next, once MAIN&apos;s look is confirmed.
           </div>
-          <button
-            onClick={handleBack}
-            style={{ marginTop: 8, padding: "10px 22px", borderRadius: 100, border: "1px solid #1A1B1E", background: "transparent", color: "#1A1B1E", fontSize: 12.5, cursor: "pointer" }}
-          >
-            ← Back to universe
-          </button>
         </div>
+      )}
+
+      {phase === "revealed" && (
+        <button
+          onClick={handleBack}
+          style={{
+            position: "absolute", bottom: 26, left: "50%", transform: "translateX(-50%)",
+            padding: "10px 22px", borderRadius: 100, border: "1px solid #1A1B1E", background: "rgba(255,255,255,.5)",
+            backdropFilter: "blur(12px)", color: "#1A1B1E", fontSize: 12.5, cursor: "pointer",
+          }}
+        >
+          ← Back to universe
+        </button>
       )}
     </div>
   );
