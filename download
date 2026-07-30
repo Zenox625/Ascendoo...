@@ -1,15 +1,16 @@
-# Copy this file to .env.local and fill in your real values.
-# .env.local is already in .gitignore — never commit real secrets.
+import { NextResponse } from "next/server";
+import { randomBytes } from "crypto";
+import { buildAuthorizeUrl } from "@/lib/spotify";
 
-# --- Supabase (new project, separate from the old Ascendo) ---
-SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=
-
-# --- Spotify (reused from the old project — same app, just update the
-# Redirect URI list on Spotify's dashboard once you know this project's URL) ---
-SPOTIFY_CLIENT_ID=
-SPOTIFY_CLIENT_SECRET=
-SPOTIFY_REDIRECT_URI=http://127.0.0.1:3000/api/spotify/callback
-
-# --- Google Calendar (reused — same secret ICS URL as before) ---
-GOOGLE_CALENDAR_ICS_URL=
+export async function GET() {
+  const state = randomBytes(16).toString("hex");
+  const res = NextResponse.redirect(buildAuthorizeUrl(state));
+  res.cookies.set("spotify_oauth_state", state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 600, // 10 minutes is plenty to complete the consent screen
+    path: "/",
+  });
+  return res;
+}

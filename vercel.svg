@@ -1,1 +1,15 @@
-<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+# Copy this file to .env.local and fill in your real values.
+# .env.local is already in .gitignore — never commit real secrets.
+
+# --- Supabase (new project, separate from the old Ascendo) ---
+SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=
+
+# --- Spotify (reused from the old project — same app, just update the
+# Redirect URI list on Spotify's dashboard once you know this project's URL) ---
+SPOTIFY_CLIENT_ID=
+SPOTIFY_CLIENT_SECRET=
+SPOTIFY_REDIRECT_URI=http://127.0.0.1:3000/api/spotify/callback
+
+# --- Google Calendar (reused — same secret ICS URL as before) ---
+GOOGLE_CALENDAR_ICS_URL=

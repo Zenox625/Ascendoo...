@@ -1,18 +1,48 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import Link from "next/link";
+import { isSpotifyConnected } from "@/lib/spotify";
+import SpotifySection from "@/components/SpotifySection";
+import SpotifyDisconnect from "@/components/SpotifyDisconnect";
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-]);
+export const dynamic = "force-dynamic";
 
-export default eslintConfig;
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ spotify_connected?: string; spotify_error?: string }>;
+}) {
+  const params = await searchParams;
+  const connected = await isSpotifyConnected();
+
+  return (
+    <div className="glass-page">
+      <div className="glass-card">
+        <div className="row-between mb-16">
+          <h2 className="h2" style={{ margin: 0 }}>Settings</h2>
+          <Link href="/" className="btn-icon" aria-label="Back to universe">←</Link>
+        </div>
+
+        {params.spotify_connected && (
+          <div className="mb-16" style={{ fontSize: 12.5, color: "var(--accent)" }}>Spotify connected.</div>
+        )}
+        {params.spotify_error && (
+          <div className="mb-16" style={{ fontSize: 12.5, color: "#C24E3A" }}>
+            Couldn&apos;t connect Spotify ({params.spotify_error}). Try again.
+          </div>
+        )}
+
+        <div className="row-between mb-16">
+          <div>
+            <div className="card-title">Spotify</div>
+            <div className="card-sub">{connected ? "Connected" : "Not connected"}</div>
+          </div>
+          {connected ? (
+            <SpotifyDisconnect />
+          ) : (
+            <a href="/api/spotify/login" className="btn btn-accent">Connect Spotify</a>
+          )}
+        </div>
+        {connected && <SpotifySection />}
+      </div>
+    </div>
+  );
+}

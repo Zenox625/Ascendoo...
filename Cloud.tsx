@@ -1,35 +1,22 @@
 "use client";
 
-import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
-import { useSpotifyPlayer } from "@/lib/spotify-player-context";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-export default function MiniPlayer() {
-  const { status, playbackState, togglePlay, next, previous } = useSpotifyPlayer();
+export default function SpotifyDisconnect() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
-  if (status !== "ready" || !playbackState) return null;
-  const track = playbackState.track_window?.current_track;
-  if (!track) return null;
+  const disconnect = async () => {
+    setLoading(true);
+    await fetch("/api/spotify/disconnect", { method: "POST" });
+    setLoading(false);
+    router.refresh();
+  };
 
   return (
-    <div className="mini-player">
-      <div className="mini-player-track">
-        {track.album.images[0] && <img src={track.album.images[0].url} alt="" className="mini-player-art" />}
-        <div style={{ minWidth: 0 }}>
-          <div className="mini-player-name">{track.name}</div>
-          <div className="mini-player-artist">{track.artists.map((a) => a.name).join(", ")}</div>
-        </div>
-      </div>
-      <div className="row-gap">
-        <button className="btn-icon" onClick={previous}>
-          <SkipBack size={14} />
-        </button>
-        <button className="btn-icon" onClick={togglePlay}>
-          {playbackState.paused ? <Play size={14} /> : <Pause size={14} />}
-        </button>
-        <button className="btn-icon" onClick={next}>
-          <SkipForward size={14} />
-        </button>
-      </div>
-    </div>
+    <button className="btn btn-ghost" onClick={disconnect} disabled={loading}>
+      {loading ? "Disconnecting…" : "Disconnect"}
+    </button>
   );
 }

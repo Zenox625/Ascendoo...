@@ -1,16 +1,7 @@
 "use client";
 
-import dynamicImport from "next/dynamic";
+import { Stars } from "@react-three/drei";
 
-const UniverseApp = dynamicImport(() => import("@/components/universe/UniverseApp"), {
-  ssr: false,
-  loading: () => (
-    <div style={{ width: "100vw", height: "100vh", background: "#05060a", display: "flex", alignItems: "center", justifyContent: "center", color: "#8D96A8", fontSize: 13 }}>
-      Loading universe…
-    </div>
-  ),
-});
-
-export default function UniversePreviewClient() {
-  return <UniverseApp />;
+export default function StarField() {
+  return <Stars radius={80} depth={50} count={3000} factor={3} saturation={0} fade speed={0.4} />;
 }

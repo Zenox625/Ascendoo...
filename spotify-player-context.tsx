@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
-import { getValidAccessToken } from "@/lib/spotify";
+import { disconnectSpotify } from "@/lib/spotify";
 
-export async function GET() {
+export async function POST() {
   try {
-    const token = await getValidAccessToken();
-    if (!token) {
-      return NextResponse.json({ connected: false }, { status: 200 });
-    }
-    return NextResponse.json({ connected: true, access_token: token });
+    await disconnectSpotify();
+    return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error("Spotify token route error:", e);
-    return NextResponse.json({ connected: false, error: "token_error" }, { status: 500 });
+    console.error("Spotify disconnect error:", e);
+    return NextResponse.json({ ok: false }, { status: 500 });
   }
 }

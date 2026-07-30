@@ -1,38 +1,33 @@
-export {};
+type Table<Row, Insert, Update = Partial<Insert>> = {
+  Row: Row;
+  Insert: Insert;
+  Update: Update;
+  Relationships: [];
+};
 
-declare global {
-  interface Window {
-    onSpotifyWebPlaybackSDKReady: () => void;
-    Spotify: {
-      Player: new (options: {
-        name: string;
-        getOAuthToken: (cb: (token: string) => void) => void;
-        volume?: number;
-      }) => SpotifyPlayerInstance;
+export type Database = {
+  public: {
+    Tables: {
+      spotify_connection: Table<
+        {
+          id: number;
+          access_token: string;
+          refresh_token: string;
+          expires_at: string;
+          scope: string | null;
+          updated_at: string;
+        },
+        {
+          id: number;
+          access_token: string;
+          refresh_token?: string;
+          expires_at: string;
+          scope?: string | null;
+          updated_at?: string;
+        }
+      >;
     };
-  }
-}
-
-export interface SpotifyPlayerInstance {
-  connect: () => Promise<boolean>;
-  disconnect: () => void;
-  addListener: (event: string, cb: (data: unknown) => void) => void;
-  removeListener: (event: string) => void;
-  togglePlay: () => Promise<void>;
-  nextTrack: () => Promise<void>;
-  previousTrack: () => Promise<void>;
-  getCurrentState: () => Promise<SpotifyPlaybackState | null>;
-}
-
-export interface SpotifyPlaybackState {
-  paused: boolean;
-  position: number;
-  duration: number;
-  track_window: {
-    current_track: {
-      name: string;
-      artists: { name: string }[];
-      album: { name: string; images: { url: string }[] };
-    };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
   };
-}
+};

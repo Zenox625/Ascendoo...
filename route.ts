@@ -1,20 +1,40 @@
 "use client";
 
-import GlassObject from "@/components/universe/GlassObject";
-import SubItem from "@/components/universe/SubItem";
+import { useRef, useState } from "react";
+import { useFrame } from "@react-three/fiber";
+import * as THREE from "three";
 
-const SUB_ITEMS = ["Routine", "Tasks", "Habits", "Journal"];
+export default function GlassObject({ position }: { position: [number, number, number] }) {
+  const mesh = useRef<THREE.Mesh>(null);
+  const [hovered, setHovered] = useState(false);
+  const [spinning, setSpinning] = useState(true);
 
-export default function MainUniverse({ position }: { position: [number, number, number] }) {
-  const radius = 2.6;
+  useFrame((_, delta) => {
+    if (!mesh.current) return;
+    if (spinning) mesh.current.rotation.y += delta * 0.25;
+    const targetScale = hovered ? 1.04 : 1;
+    const s = THREE.MathUtils.lerp(mesh.current.scale.x, targetScale, Math.min(1, delta * 5));
+    mesh.current.scale.setScalar(s);
+  });
+
   return (
-    <group>
-      <GlassObject position={position} />
-      {SUB_ITEMS.map((label, i) => {
-        const angle = (i / SUB_ITEMS.length) * Math.PI * 2 - Math.PI / 2;
-        const offset: [number, number, number] = [Math.cos(angle) * radius, Math.sin(angle) * radius * 0.6, Math.sin(angle) * 0.6];
-        return <SubItem key={label} label={label} center={position} offset={offset} />;
-      })}
-    </group>
+    <mesh
+      ref={mesh}
+      position={position}
+      rotation={[Math.PI / 5, 0, 0]}
+      onPointerOver={() => setHovered(true)}
+      onPointerOut={() => setHovered(false)}
+      onClick={(e) => {
+        e.stopPropagation();
+        setSpinning((s) => !s);
+      }}
+    >
+      <torusGeometry args={[1.1, 0.42, 64, 128]} />
+      <meshStandardMaterial color="#4F8DE6" roughness={0.4} metalness={0.1} />
+      {/* Diagnostic: temporarily plain and bright instead of the glass
+          MeshPhysicalMaterial (transmission), to confirm whether the object
+          itself mounts and positions correctly before reintroducing the
+          fancier — but more GPU/driver-sensitive — glass look. */}
+    </mesh>
   );
 }

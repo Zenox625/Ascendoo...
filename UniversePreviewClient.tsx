@@ -1,22 +1,43 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type MutableRefObject } from "react";
+import Cloud from "@/components/universe/Cloud";
 
-export default function SpotifyDisconnect() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+export const CATEGORIES = ["MAIN", "MIND", "BODY", "ACADEMY", "SIDES", "PROFILE"];
+export const SPACING = 6;
+export const TOTAL_WIDTH = CATEGORIES.length * SPACING;
 
-  const disconnect = async () => {
-    setLoading(true);
-    await fetch("/api/spotify/disconnect", { method: "POST" });
-    setLoading(false);
-    router.refresh();
-  };
+export default function CloudField({
+  offsetRef,
+  selected,
+  fadeRef,
+  onSelect,
+}: {
+  offsetRef: MutableRefObject<number>;
+  selected: number | null;
+  fadeRef: MutableRefObject<number>;
+  onSelect: (index: number) => void;
+}) {
+  const [hovered, setHovered] = useState<number | null>(null);
 
   return (
-    <button className="btn btn-ghost" onClick={disconnect} disabled={loading}>
-      {loading ? "Disconnecting…" : "Disconnect"}
-    </button>
+    <>
+      {CATEGORIES.map((label, i) => (
+        <Cloud
+          key={label}
+          label={label}
+          baseX={i * SPACING}
+          offsetRef={offsetRef}
+          totalWidth={TOTAL_WIDTH}
+          hovered={hovered === i && selected === null}
+          onPointerOver={() => setHovered(i)}
+          onPointerOut={() => setHovered((h) => (h === i ? null : h))}
+          onClick={() => onSelect(i)}
+          fadeRef={fadeRef}
+          isSelected={selected === i}
+          isAnySelected={selected !== null}
+        />
+      ))}
+    </>
   );
 }
